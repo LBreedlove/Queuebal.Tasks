@@ -48,4 +48,16 @@ public class WorkerTaskBatchFailure
     /// </summary>
     [Key(5)]
     public required List<long> RemainingWorkerTaskIds { get; set; }
+
+    /// <summary>
+    /// An optional time span indicating how long to wait before executing more tasks for the GroupKey.
+    /// </summary>
+    [Key(6)]
+    public TimeSpan? RetryAfter { get; set; }
+
+    /// <summary>
+    /// Indicates whether the failed task should be retried.
+    /// </summary>
+    [Key(7)]
+    public bool RetryFailedTask { get; set; }
 }
