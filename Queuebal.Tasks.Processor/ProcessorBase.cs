@@ -10,6 +10,7 @@ namespace Queuebal.Tasks.Processor;
 public abstract class ProcessorBase
 {
     private readonly IWorkerTaskConsumer _consumer;
+    private readonly IIdempotencyChecker _idempotencyChecker;
     private readonly WorkerTaskProcessorConfiguration _configuration;
     private readonly string _processorId;
 
@@ -17,11 +18,13 @@ public abstract class ProcessorBase
     /// Initializes a new instance of the ProcessorBase class.
     /// </summary>
     /// <param name="consumer">The consumer used to pull from the queue.</param>
+    /// <param name="idempotencyChecker">The idempotency checker used to check for duplicate tasks.</param>
     /// <param name="configuration">The configuration for the processor.</param>
     /// <param name="processorId">The ID of the processor.</param>
-    protected ProcessorBase(IWorkerTaskConsumer consumer, WorkerTaskProcessorConfiguration configuration, string processorId)
+    protected ProcessorBase(IWorkerTaskConsumer consumer, IIdempotencyChecker idempotencyChecker, WorkerTaskProcessorConfiguration configuration, string processorId)
     {
         _consumer = consumer;
+        _idempotencyChecker = idempotencyChecker;
         _configuration = configuration;
         _processorId = processorId;
     }
@@ -116,6 +119,15 @@ public abstract class ProcessorBase
             }
         }
     }
+
+    /// <summary>
+    /// Checks if a task with the given idempotency key has already been processed.
+    /// </summary>
+    /// <param name="idempotencyKey">The idempotency key of the task to check.</param>
+    /// <param name="cancellationToken">The cancellation token used to cancel the asynchronous operation.</param>
+    /// <returns></returns>
+    protected async Task<bool> IsDuplicateTaskAsync(string idempotencyKey, CancellationToken cancellationToken) =>
+        await _idempotencyChecker.IsDuplicateAsync(idempotencyKey, cancellationToken);
 
     /// <summary>
     /// Method to be implemented by derived classes to process a batch of tasks.
