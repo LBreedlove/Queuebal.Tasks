@@ -13,8 +13,8 @@ public class TestProcessorBase
     {
         private readonly long? _failedTaskId;
 
-        public FakeProcessor(IWorkerTaskConsumer consumer, WorkerTaskProcessorConfiguration configuration, long? failedTaskId = null)
-            : base(consumer, configuration, "fake_processor_id")
+        public FakeProcessor(IWorkerTaskConsumer consumer, IIdempotencyChecker idempotencyChecker, WorkerTaskProcessorConfiguration configuration, long? failedTaskId = null)
+            : base(consumer, idempotencyChecker, configuration, "fake_processor_id")
         {
             _failedTaskId = failedTaskId;
         }
@@ -47,9 +47,10 @@ public class TestProcessorBase
     public async Task test_run_when_cancellation_requested_does_not_call_consumer()
     {
         var consumerMock = new Mock<IWorkerTaskConsumer>();
+        var idempotencyCheckerMock = new Mock<IIdempotencyChecker>();
         var config = new WorkerTaskProcessorConfiguration { MaxTasksPerBatch = 100, WaitTimeout = TimeSpan.FromSeconds(5) };
 
-        var processor = new FakeProcessor(consumerMock.Object, config);
+        var processor = new FakeProcessor(consumerMock.Object, idempotencyCheckerMock.Object, config);
         var cancellationToken = new CancellationToken(true);
 
         await processor.Run(cancellationToken);
@@ -98,9 +99,10 @@ public class TestProcessorBase
         .Returns(workerTaskBatch)
         .Returns(() => { cancellationTokenSource.Cancel(); return WorkerTaskBatch.Empty(); });
 
+        var idempotencyCheckerMock = new Mock<IIdempotencyChecker>();
         var config = new WorkerTaskProcessorConfiguration { MaxTasksPerBatch = 100, WaitTimeout = TimeSpan.FromSeconds(5) };
 
-        var processor = new FakeProcessor(consumerMock.Object, config, failedTaskId: -1);
+        var processor = new FakeProcessor(consumerMock.Object, idempotencyCheckerMock.Object ,config, failedTaskId: -1);
 
         await processor.Run(cancellationToken);
 
@@ -151,9 +153,10 @@ public class TestProcessorBase
         .Returns(workerTaskBatch)
         .Returns(() => { cancellationTokenSource.Cancel(); return WorkerTaskBatch.Empty(); });
 
+        var idempotencyCheckerMock = new Mock<IIdempotencyChecker>();
         var config = new WorkerTaskProcessorConfiguration { MaxTasksPerBatch = 100, WaitTimeout = TimeSpan.FromSeconds(5) };
 
-        var processor = new FakeProcessor(consumerMock.Object, config, failedTaskId: 234);
+        var processor = new FakeProcessor(consumerMock.Object, idempotencyCheckerMock.Object, config, failedTaskId: 234);
 
         await processor.Run(cancellationToken);
 
@@ -204,9 +207,10 @@ public class TestProcessorBase
         .Returns(workerTaskBatch)
         .Returns(() => { cancellationTokenSource.Cancel(); return WorkerTaskBatch.Empty(); });
 
+        var idempotencyCheckerMock = new Mock<IIdempotencyChecker>();
         var config = new WorkerTaskProcessorConfiguration { MaxTasksPerBatch = 100, WaitTimeout = TimeSpan.FromSeconds(5) };
 
-        var processor = new FakeProcessor(consumerMock.Object, config);
+        var processor = new FakeProcessor(consumerMock.Object, idempotencyCheckerMock.Object, config);
 
         await processor.Run(cancellationToken);
 
